@@ -3,8 +3,8 @@ from DMS import DMS
 class Sql_server(DMS):
 
   def insert(self,target,values,source):
-    statement = "INSERT INTO {0}".format(target)
-    statement = statement + "({0})".format(','.join(values))
+    statement = "INSERT INTO {0} \n".format(target)
+    statement = statement + "(\n {0} \n)".format(','.join(values))
     statement = statement + " " + str(source)
     return statement
 
@@ -26,15 +26,15 @@ class Sql_server(DMS):
 
   def select(self,value,sources,join_types = []
     ,join_conditions = [], conditions = [], order = []):
-      statement = "SELECT {0} FROM {1} ".format(",".join(value),sources[0])
+      statement = "SELECT {0} FROM {1} \n".format(",".join(value),sources[0])
       if len(sources) > 1:
-        joins = map(lambda (source,join_type, condition_list): "{0} {1} on {2}"
+        joins = map(lambda (source,join_type, condition_list): "{0} {1} on {2} \n"
         .format(join_type, source, " and ".join(condition_list)), zip(sources[1:],join_types,join_conditions))
         statement = statement + " ".join(joins)
       if len(conditions) > 0:
-        statement = statement + " WHERE " + " and ".join(conditions)
+        statement = statement + "WHERE " + " and ".join(conditions) + "\n"
       if len(order):
-        statement = statement + " ORDER BY " + ",".join(order)
+        statement = statement + "ORDER BY " + ",".join(order) + "\n"
       return statement
 
 

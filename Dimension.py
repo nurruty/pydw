@@ -6,6 +6,8 @@ class Dimension(Table):
   def __init__(self,dms_type,name,columns,key = [],query = [], virtual = False):
     Table.__init__(self,dms_type,name,columns,key = key, query = query, virtual= virtual)
 
+  def update(self,values,data,source = [],conditions = []):
+    raise "Type 1 SCDimensions cannot be updated"
 
 
 
@@ -13,14 +15,13 @@ class SCDimension1(Table):
   def __init__(self,dms_type,name,columns,key = [],query = [], virtual = False):
     Table.__init__(self,dms_type,name,columns,key = key, query = query, virtual= virtual)
 
-  def insert(self,values,source,join_key):
-    key_list = map(lambda (key1,key2): "{0} = {1}".format(key1,key2), zip(join_key, self.key))
+  def insert(self,values,source,join_conditions):
+    #key_list = map(lambda (key1,key2): "{0} = {1}".format(key1,key2), zip(join_key, self.key))
     return self.select_join(sources = source + [self.name],
-    join_types = ["LEFT JOIN"], join_conditions = [key_list], conditions= ["{0} is null".format(self.key[0])])
+    join_types = ["LEFT JOIN"], join_conditions = join_conditions, conditions= ["{0} is null".format(self.key[0])])
 
 
-  def update(self,values,data,source = [],conditions = []):
-    raise "Type 1 SCDimensions cannot be updated"
+  
 
 
 
