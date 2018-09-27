@@ -42,16 +42,18 @@ def test2_update_dimension_2():
           join_conditions = [["CauBajCod = TEST_ID"]]
         )
 
-def test2_update_dimension_3():
+table = SCDimension1.fromTable(tdms,dw,"Dimensiones_ODS","RAFAP51_CAUBAJ")
+lkp = SCDimension1.fromTable(tdms,dw,"Dimensiones_DW","LKP_TEST")
 
-  table = SCDimension1.fromTable(tdms,dw,"Dimensiones_ODS","RAFAP51_CAUBAJ")
-  lkp = SCDimension1.fromTable(tdms,dw,"Dimensiones_DW","LKP_TEST")
+def test2_update_dimension_3(lookup_table,data_table,empty_row,
+  insert_values, update_values):
 
-  temp = Table.fromTextQuery(tdms,'',"SELECT 1, 'TEST' \n")
+  att = ",".join(empty_row)
+  temp = Table.fromTextQuery(tdms,'',"SELECT {0} \n".format(att))
 
   statements = "IF BEGIN (" + lkp.aggregate(operations = ["COUNT"], operation_values = ['*']) + ") = 0 \n"
   statements +=  lkp.insert(
-      values = ["TEST_ID,TEST_DESC"],
+      values = insert_values,
       source= temp
       )
   statements += "END\n"
@@ -61,7 +63,7 @@ def test2_update_dimension_3():
     source_values= table.columns
     )
 
-  statements += lkp.update(["TEST_DESC"],["causalb"],table)
+  statements += lkp.update(["TEST_DESC"],[table.columns[1]],table)
   return statements
 
 
@@ -69,9 +71,9 @@ def test2_update_dimension_3():
 
 
 
-results.append(test2_update_dimension_1())
-results.append(test2_update_dimension_2())
-results.append(test2_update_dimension_3())
+#results.append(test2_update_dimension_1())
+#results.append(test2_update_dimension_2())
+#Sresults.append(test2_update_dimension_3(lkp,table))
 
 for i,result in enumerate(results):
   print("******************")
