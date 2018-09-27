@@ -2,7 +2,7 @@
 
 import pymssql
 from Table import Table
-from Dimension import SCDimension1
+from SCDimension1 import SCDimension1
 from DMS import DMS_TYPE
 
 
@@ -19,17 +19,50 @@ def test_1_create_dimension():
   return True
 
 def test2_update_dimension_1():
-  source = Table.fromTable(tdms,ods,"Dimensiones_ODS","RAFAP51_CAUBAJ")
-  lkp = SCDimension1.fromTable(tdms,dw,"Dimensiones_DW","LKP_CAUSAL_BAJA")
+  table = Table.fromTable(tdms,ods,"Dimensiones_ODS","RAFAP51_CAUBAJ")
+  lkp = SCDimension1.fromTable(tdms,dw,"Dimensiones_DW","LKP_TEST")
 
-  return lkp.insert(source.columns,[source.name],[["CAUSAL_BAJA_COD = LKP_CAUSAL_COD"]])
+  return lkp.update_scd1(
+          lkp.columns[:1],
+          [table],
+          table.columns[:1],
+          [["CauBajCod = TEST_ID"]]
+        )
 
 
-def test2_update_dimension_2():    
-  
-  return True
+def test2_update_dimension_2():
 
+  table = Table.fromTable(tdms,ods,"Dimensiones_ODS","RAFAP51_CAUBAJ")
+  lkp = SCDimension1.fromTable(tdms,dw,"Dimensiones_DW","LKP_TEST")
 
+  return lkp.update_scd1(
+          values = lkp.columns[:1],
+          source = [table],
+          source_values = table.columns[:1],
+          join_conditions = [["CauBajCod = TEST_ID"]]
+        )
+
+def test2_update_dimension_3():
+
+  table = SCDimension1.fromTable(tdms,dw,"Dimensiones_ODS","RAFAP51_CAUBAJ")
+  lkp = SCDimension1.fromTable(tdms,dw,"Dimensiones_DW","LKP_TEST")
+
+  temp = Table.fromTextQuery(tdms,'',"SELECT 1, 'TEST' \n")
+
+  statements = "IF BEGIN (" + lkp.aggregate(operations = ["COUNT"], operation_values = ['*']) + ") = 0 \n"
+  statements +=  lkp.insert(
+      values = ["TEST_ID,TEST_DESC"],
+      source= temp
+      )
+  statements += "END\n"
+
+  statements += lkp.update_scd1(
+    source= [table],
+    source_values= table.columns
+    )
+
+  statements += lkp.update(["TEST_DESC"],["causalb"],table)
+  return statements
 
 
 
@@ -37,6 +70,9 @@ def test2_update_dimension_2():
 
 
 results.append(test2_update_dimension_1())
+results.append(test2_update_dimension_2())
+results.append(test2_update_dimension_3())
 
-for result in results:
+for i,result in enumerate(results):
+  print("******************")
   print(result)

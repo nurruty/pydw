@@ -3,24 +3,26 @@ from DMS import DMS
 class Sql_server(DMS):
       
   #def create_table(self,name,columns,key):
-        
+
+  def truncate(self,target):
+    return "TRUNCATE TABLE {0}".format(target)
 
   def insert(self,target,values,source):
-    statement = "INSERT INTO {0} \n".format(target)
+    statement = "INSERT INTO {0} ".format(target)
     statement = statement + "\n(\n {0} \n)".format(','.join(values))
     statement = statement + " " + str(source)
     return statement
 
 
-  def update(self,target,values,data,source = [], where = []):
+  def update(self,target,values,data,source = '', where = []):
     statement = "UPDATE {0}\nSET ".format(target)
-    params = map(lambda column,value: "{0} = {1}"
-    .format(column,value), zip(values,data))
+    params = map(lambda data: "{0} = {1}"
+    .format(data[0],data[1]), zip(values,data))
     statement += ",".join(params)
     if len(source) > 0:
-      statement += "FROM\n" + str(source)
+      statement += "\nFROM\n" + str(source)
     if len(where) > 0:
-        statement += "WHERE " + " and ".join(map(lambda a: '(' + a + ')',where)) + "\n"
+        statement += " WHERE " + " and ".join(map(lambda a: '(' + a + ')',where)) + "\n"
     return statement
 
 
@@ -30,22 +32,22 @@ class Sql_server(DMS):
     return statement
 
 
-  def select(self,value,sources,join_types = []
+  def select(self,values = [],sources = [],join_types = []
     ,join_conditions = [], where = [], order = [],group = []):
 
-      statement = "SELECT {0}\n".format(",".join(value))
-      statement += "FROM {0}\n".format(sources[0])
+      statement = " SELECT {0}\n".format(",".join(values))
+      statement += " FROM {0}\n".format(sources[0])
 
       if len(sources) > 1:
         joins = map(lambda t: "{0} {1} on {2} \n"
         .format(t[1], t[0], " and ".join(t[2])), zip(sources[1:],join_types,join_conditions))
         statement += " ".join(joins)
       if len(where) > 0:
-        statement += "WHERE " + " and ".join(map(lambda a: '(' + a + ')',where)) + "\n"
-      if len(order) > 0:
-        statement += "ORDER BY " + ",".join(order) + "\n"
+        statement += " WHERE " + " and ".join(map(lambda a: '(' + a + ')',where)) + "\n"
       if len(group) > 0:
-        statement += "GROUP BY " + ",".join(group) + "\n"   
+        statement += " GROUP BY " + ",".join(group) + "\n"
+      if len(order) > 0:
+        statement += " ORDER BY " + ",".join(order) + "\n"   
       return statement
 
 
