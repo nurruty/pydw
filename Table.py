@@ -12,7 +12,7 @@ class Table(object):
 
 
   @classmethod
-  def fromTable(cls,dms_type,cursor,database_name,table_name,conditions = []):
+  def fromTable(cls,dms_type,cursor,database_name,table_name,where = []):
     dms = _init_dms_(dms_type)
     query = dms.get_columns(database_name,table_name)
     cursor.execute(query)
@@ -20,39 +20,48 @@ class Table(object):
     query = dms.get_key(database_name,table_name)
     cursor.execute(query)
     key = cursor.fetchall()
-    key = map(lambda k: k[0], key) if len(key) > 0 else columns[0]
-    query = dms.select(columns, [table_name],conditions = conditions)
+    key = map(lambda k: k[0], key) if len(key) > 0 else []
+    query = dms.select(columns, [table_name],where = where)
     return cls(dms_type,table_name,columns,key,query)
 
 
   @classmethod
   def fromQuery(cls,dms_type,cursor,table_name,values = ["*"],sources= [],
-        join_types = [],join_conditions = [], conditions = [] ,order = [] ):
+        join_types = [],join_conditions = [], where = [] ,order = [] ):
         dms = _init_dms_(dms_type)
         query = dms.select(values,sources,join_types,
-        join_conditions,conditions,order)
+        join_conditions,where,order)
         return cls(dms_type,table_name,values, query = query, virtual=True)
 
 
   def insert(self,values,source):
     return self.dms.insert(self.name,values,source)
 
-  def update(self,values,data,source = [],conditions = []):
+  def update(self,values,data,source = [],where = []):
     return self.dms.update(self.name,values,data,
-      source = source, conditions= conditions)
+      source = source, where= where)
 
-  def delete(self,target,conditions = []):
-    return self.dms.delete(self.name,conditions= conditions)
+  def delete(self,target,where = []):
+    return self.dms.delete(self.name,where= where)
 
-  def select(self,values = ['*'] ,conditions = [], order = []):
+  def select(self,values = ['*'] ,where = [], order = []):
     return self.dms.select(values, [self.name],
-      conditions = conditions, order= order)
+      where = where, order= order)
 
   def select_join(self,values = ['*'],sources = [],join_types = []
-    ,join_conditions = [], conditions = [], order = []):
+    ,join_conditions = [], where = [], order = []):
 
     return self.dms.select(values, [self.name] + sources, join_types= join_types,
-      join_conditions= join_conditions,conditions = conditions, order= order)
+      join_conditions= join_conditions,where = where, order= order)
+
+
+class Column:
+  def __init__(self,name,col_type,is_null,is_autonumber):
+        self.name = name
+        self.col_type = col_type
+        self.is_null = True if not is_null else False
+        self.is_autonumber = True if is_autonumber else False
+
 
 #helpers
 def _init_dms_(dms_type):

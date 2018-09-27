@@ -18,7 +18,7 @@ class SCDimension1(Table):
   def insert(self,values,source,join_conditions):
     #key_list = map(lambda (key1,key2): "{0} = {1}".format(key1,key2), zip(join_key, self.key))
     return self.select_join(sources = source + [self.name],
-    join_types = ["LEFT JOIN"], join_conditions = join_conditions, conditions= ["{0} is null".format(self.key[0])])
+    join_types = ["LEFT JOIN"], join_conditions = join_conditions, where= ["{0} is null".format(self.key[0])])
 
 
   
@@ -38,19 +38,19 @@ class SCDimension2(Table):
 
   @classmethod
   def fromTable(cls,dms_type,cursor,database_name,table_name,
-    valid_column,init_column, end_column, conditions = []):
+    valid_column,init_column, end_column, where = []):
     table = Table.fromTable(dms_type,cursor,database_name,table_name,
-    conditions)
+    where)
     return cls(dms_type,table.name,table.columns,valid_column,init_column, end_column
     ,key = table.key, query = table.query)
 
 
   @classmethod
   def fromQuery(cls,dms_type,cursor,table_name,valid_column,init_column, end_column,
-        values = ["*"],sources= [],join_types = [],join_conditions = [], conditions = [] ,order = [] ):
+        values = ["*"],sources= [],join_types = [],join_conditions = [], where = [] ,order = [] ):
 
         table = Table.fromQuery(dms_type,cursor,table_name,values,sources,join_types,
-        join_conditions,conditions,order)
+        join_conditions,where,order)
         return cls(dms_type,table_name,values,valid_column,init_column,
         end_column, query = table.query, virtual=True)
 
