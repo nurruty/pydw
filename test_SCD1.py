@@ -63,7 +63,7 @@ def test2_update_dimension_3(lookup_table,data_table,empty_row,
     source_values= table.columns
     )
 
-  statements += lkp.update(["TEST_DESC"],[table.columns[1]],table)
+  #statements += lkp.update(["TEST_DESC"],[table.columns[1]],table)
   return statements
 
 

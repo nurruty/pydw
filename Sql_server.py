@@ -1,8 +1,15 @@
 from DMS import DMS 
 
 class Sql_server(DMS):
-      
-  #def create_table(self,name,columns,key):
+
+  def create_table(self,name,columns,key):
+    statement = "CREATE TABLE {0} (\n".format(name)
+    statement += ",\n".join(columns)
+    statement += "CONSTRAINT [PK_{0}] PRIMARY KEY CLUSTERED ( {1} ASC ) )\n".format(name,",".join(key))
+    return statement
+
+  def drop(self,target):
+    return "DROP TABLE {0}".format(target)
 
   def truncate(self,target):
     return "TRUNCATE TABLE {0}".format(target)
@@ -32,7 +39,7 @@ class Sql_server(DMS):
     return statement
 
 
-  def select(self,values = [],sources = [],join_types = []
+  def select(self,values = ['*'],sources = [],join_types = []
     ,join_conditions = [], where = [], order = [],group = []):
 
       statement = " SELECT {0}\n".format(",".join(values))
@@ -47,9 +54,14 @@ class Sql_server(DMS):
       if len(group) > 0:
         statement += " GROUP BY " + ",".join(group) + "\n"
       if len(order) > 0:
-        statement += " ORDER BY " + ",".join(order) + "\n"   
+        statement += " ORDER BY " + ",".join(order) + "\n"
       return statement
 
+  def select_into(self,table_name,values = ['*'], sources = [],join_types = []
+                  ,join_conditions = [], where = [], order = [], group = []):
+    values + ' INTO ' + table_name
+    return self.select(values, sources,join_types
+    ,join_conditions, where, order, group )
 
   def get_columns(self,database_name,table_name):
     table = "{0}.INFORMATION_SCHEMA.COLUMNS".format(database_name)
