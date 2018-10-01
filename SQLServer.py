@@ -64,18 +64,18 @@ class SQLServer(DBMS):
         if sources:
             statement += " FROM {0}\n".format(sources[0])
             if len(sources) > 1:
-                joins = map(lambda t: "{0} {1} on {2} \n"
-                .format(t[1], t[0], " and ".join(t[2])), zip(sources[1:],join_types,join_conditions))
+                joins = list(map(lambda t: "{0} {1} on {2} \n"
+                .format(t[1], t[0], " and ".join(t[2])), zip(sources[1:],join_types,join_conditions)))
                 statement += " ".join(joins)
             if where:
-                statement += " WHERE " + " and ".join(map(lambda a: '(' + a + ')',where)) + "\n"
+                statement += " WHERE " + " and ".join(list(map(lambda a: '(' + a + ')',where))) + "\n"
             if group:
                 statement += " GROUP BY " + ",".join(group) + "\n"
             if order:
                 statement += " ORDER BY " + ",".join(order) + ' ' + order_asc + "\n"
         return statement
 
-    def select_into(self, table_name, values=['*'], sources=[],join_types=[]
+    def select_into(self, table_name, values=['*'], sources=[], join_types=[]
                     ,join_conditions=[], where=[], group=[], order=[], order_asc='ASC'):
         values + ' INTO ' + table_name
         return self.select(values, sources, join_types, join_conditions, where, group, order, order_asc )  
@@ -98,9 +98,18 @@ class SQLServer(DBMS):
         return statement
 
     def get_columns(self,database_name,table_name):
+        values = [" COLUMN_NAME, DATA_TYPE + " 
+        + "case when DATA_TYPE = 'numeric' or DATA_TYPE = 'decimal'"
+        + "then '(' + convert(varchar(3),NUMERIC_PRECISION) +','+ convert(varchar(3),NUMERIC_SCALE) + ')'"
+	    + "when DATA_TYPE = 'varchar' or DATA_TYPE = 'char'"
+        + "then '(' + convert(varchar(5),CHARACTER_MAXIMUM_LENGTH) + ')'"
+	    + "else '' end	 DATA_TYPE",
+        "case when IS_NULLABLE = 'YES' then 1 else 0 end NULLABLE",
+        "COLUMNPROPERTY(object_id(TABLE_SCHEMA+'.'+TABLE_NAME), COLUMN_NAME, 'IsIdentity') IS_IDENTITY"
+        ]
         table = "{0}.INFORMATION_SCHEMA.COLUMNS".format(database_name)
         conditions = ["TABLE_NAME = N'{0}'".format(table_name)]
-        return self.select(["COLUMN_NAME"],[table],[],[],conditions,[])
+        return self.select(values=values,sources=[table],where=conditions)
 
     def get_key(self,database_name,table_name):
         tables = ["{0}.INFORMATION_SCHEMA.TABLE_CONSTRAINTS TC".format(database_name),
@@ -110,7 +119,8 @@ class SQLServer(DBMS):
                         "TC.CONSTRAINT_NAME = KU.CONSTRAINT_NAME",
                         "KU.table_name='{0}'".format(table_name)]]
         orders = ["KU.TABLE_NAME", "KU.ORDINAL_POSITION"]
-        return self.select(['COLUMN_NAME'],tables,join_types,join_conditions,[],orders)
+        return self.select(['COLUMN_NAME'],sources=tables,join_types=join_types
+                ,join_conditions=join_conditions,order=orders)
 
     def create_temporary_table(self, table_name, column_names, column_types, column_nullable):
         columns = map(lambda c: "{0} {1} {2}".format(c[0], c[1], "NOT NULL" if not c[2] else "NULL"),
@@ -154,8 +164,8 @@ class SQLServer(DBMS):
 
     def in_(self, element, source, is_in):
         if is_in:
-            return "{0} IN {1}".format(str(element), str(source))
-        return "NOT {0} IN {1}".format(str(element), str(source))
+            return "{0} IN ({1})".format(str(element), str(source))
+        return "NOT {0} IN ({1})".format(str(element), str(source))
 
     def order_asc(self,asc):
         return 'ASC' if asc else 'DESC'
@@ -163,7 +173,7 @@ class SQLServer(DBMS):
     def union(self, sources):
         return '\nUNION\n'.join(sources)
 
-    def count(self, element, distinct):
+    def count(self, element, distinct=False):
         if distinct:
             return "COUNT(DISTINCT {0})".format(element)
         return "COUNT({0})".format(str(element))
@@ -176,3 +186,18 @@ class SQLServer(DBMS):
 
     def min(self, element):
         return "MIN({0})".format(str(element))
+
+    def today(self):
+        return "GETDATE()"
+
+    def type_number(self, n, r=0):
+        return "numeric({0},{1})".format(n,r)
+
+    def type_varchar(self, l):
+        return "varchar({0})".format(l)
+
+    def type_date(self):
+        return "date"
+
+    def null_value(self):
+        return "NULL"

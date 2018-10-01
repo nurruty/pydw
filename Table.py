@@ -8,33 +8,33 @@ def __dbms__(dbms_type):
         return SQLServer()
 
 class Table(object):
-    
-    def __init__(self, dbms_type, name, columns, key=[], query=[], alias=''):
+
+    def __init__(self, dbms, name, columns, key=[], alias=''):
         self.name = name
         self.columns = dict()
         for c in columns:
             c.container_name = name if not alias else alias
+            c.dbms = dbms
             self.columns[c.name] = c
         self.key = key if len(key) > 0 else []
-        self.query = "(" + query +")" + name if len(query) > 0 else ""
         self.alias = alias
-        self.dbms_type = dbms_type
-        self.dbms = __dbms__(dbms_type)
+        self.dbms = dbms
 
 
     @classmethod
-    def from_db(cls,dbms_type, cursor, database_name, schema_name, table_name, where=[], alias=''):
-        dbms = __dbms__(dbms_type)
+    def from_db(cls,dbms, cursor, database_name, schema_name, table_name, where=[], alias=''):
         query = dbms.get_columns(database_name,table_name)
         cursor.execute(query)
-        columns = [column[0] for column in cursor.fetchall()]
+        columns = [Column(c[0],data_type=c[1],is_null=int(c[2]),is_autonumber=int(c[3]))
+                   for c in cursor.fetchall()]
         query = dbms.get_key(database_name,table_name)
         cursor.execute(query)
         key = cursor.fetchall()
-        key = map(lambda k: k[0], key) if key else []
+        key = [k[0] for k in key]
         table_name = database_name + "." + schema_name + "." + table_name
-        query = dbms.select(columns, [table_name] ,where = where)
-        return cls(dbms_type,table_name,map(lambda c: Column(c[0],c[1],c[2],c[3]), columns),key,query,alias)
+        column_names = [c.name for c in columns]
+        query = dbms.select(column_names, [table_name] ,where = where)
+        return cls(dbms, table_name, columns, key=key, alias=alias)
 
 
     def create(self):
@@ -58,23 +58,35 @@ class Table(object):
     def truncate(self):
         return self.dbms.truncate_table(self.name)
 
-    def insert(self, columns, query):
-        values = [c.name for k,c in columns.items()]
+    def insert(self, query, columns=[]):
+        if not columns:
+            columns = self.columns
+        values = [c.name for k,c in self.columns.items()]
         return self.dbms.insert(self.name, values, query.code())
 
-    def update(self, columns, data, where=[]):
-        column_names = [c.name for k,c in columns.items()]
+    def update(self, columns=[], data=[], where=[]):
+        if not columns:
+            columns = self.columns
+        column_names = [c.name for k,c in self.columns.items()]
         return self.dbms.update(self.name, column_names, data, where=where)
 
-    def update_from(self, columns, source, where=[]):
-        column_names = [c.name for k,c in columns.items()]
-        data = map(lambda c: c.container_name + '.' + c.name + ' ' + c.alias, source.columns)
+    def update_from(self, columns=[], source=None, source_columns=[], where=[]):
+        if not columns:
+            columns = self.get_column_list()
+            print(columns)
+        column_names = [c.name for c in columns]
+
+        if not source_columns:
+            source_columns = source.get_column_list()
+        data = [c.get_full_name() for c in source_columns]
+
         if isinstance(source, Table):
             source_code = source.name + ' ' + source.alias
         else:
             source_code = '(' + source.code() + ') ' + source.alias
-        return self.dbms.update(self.name, column_names, data, source_code, where)
-    
+        return self.dbms.update(table_name= self.name, values=column_names,
+                                data=data, source=source_code, where=where)
+
     def delete(self, where=[]):
         return self.dbms.delete(self.name, where=where)
 
@@ -86,6 +98,16 @@ class Table(object):
             list_.append(c)
         return list_
 
-    
+    def get_column_names(self):
+        return [c.name for k,c in self.columns.items()]
 
-    
+    def get_column_types(self):
+        return [c.data_type for k,c in self.columns.items()]
+
+    def get_column_nullables(self):
+        return [c.is_null for k,c in self.columns.items()]
+
+    def set_columns_container(self, container_name):
+        for c in self.columns:
+            c.container_name = container_name
+

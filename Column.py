@@ -11,67 +11,71 @@ class Column:
         self.is_autonumber =  is_autonumber
         self.foreign_key_table_name = foreign_key_table_name
         self.foreign_key_column = foreign_key_column
+        self.dbms = None
 
 
-    def equals(self, dbms, target):
+    def get_full_name(self):
+        return self.container_name + '.' + self.name + ' ' + self.alias
+
+    def equals(self, target):
         if isinstance(target, Column):
-            return dbms.equals(self.container_name + '.' + self.name, target.container_name +'.'+ target.name)
-        return dbms.equals(self.container_name + '.' + self.name, target)
+            return self.dbms.equals(self.container_name + '.' + self.name, target.container_name +'.'+ target.name)
+        return self.dbms.equals(self.container_name + '.' + self.name, target)
     
-    def different(self, dbms, target):
+    def different(self, target):
         if isinstance(target, Column):
-            return dbms.different(self.container_name + '.' + self.name, target.container_name +'.'+ target.name)
-        return dbms.different(self.container_name + '.' + self.name, target)
+            return self.dbms.different(self.container_name + '.' + self.name, target.container_name +'.'+ target.name)
+        return self.dbms.different(self.container_name + '.' + self.name, target)
 
-    def is_grater(self, dbms, target):
+    def is_grater(self, target):
         if isinstance(target, Column):
-            return dbms.is_grater(self.container_name + '.' + self.name, target.container_name +'.'+ target.name)
-        return dbms.is_grater(self.container_name + '.' + self.name, target)
+            return self.dbms.is_grater(self.container_name + '.' + self.name, target.container_name +'.'+ target.name)
+        return self.dbms.is_grater(self.container_name + '.' + self.name, target)
 
-    def is_grater_or_equal(self, dbms, target):
+    def is_grater_or_equal(self, target):
         if isinstance(target, Column):
-            return dbms.is_grater_or_equal(self.container_name + '.' + self.name, target.container_name +'.'+ target.name)
-        return dbms.is_grater_or_equal(self.container_name + '.' + self.name, target)
+            return self.dbms.is_grater_or_equal(self.container_name + '.' + self.name, target.container_name +'.'+ target.name)
+        return self.dbms.is_grater_or_equal(self.container_name + '.' + self.name, target)
 
-    def is_less(self, dbms, target):
+    def is_less(self, target):
         if isinstance(target, Column):
-            return dbms.is_less(self.container_name + '.' + self.name, target.container_name +'.'+ target.name)
-        return dbms.is_less(self.container_name + '.' + self.name, target)
+            return self.dbms.is_less(self.container_name + '.' + self.name, target.container_name +'.'+ target.name)
+        return self.dbms.is_less(self.container_name + '.' + self.name, target)
 
-    def is_less_or_equal(self, dbms, target):
+    def is_less_or_equal(self, target):
         if isinstance(target, Column):
-            return dbms.is_less_or_equal(self.container_name + '.' + self.name, target.container_name +'.'+ target.name)
-        return dbms.is_less_or_equal(self.container_name + '.' + self.name, target)
+            return self.dbms.is_less_or_equal(self.container_name + '.' + self.name, target.container_name +'.'+ target.name)
+        return self.dbms.is_less_or_equal(self.container_name + '.' + self.name, target)
 
-    def between(self, dbms, left_limit, right_limit):
+    def between(self, left_limit, right_limit):
         if isinstance(left_limit, Column) and isinstance(right_limit, Column):
-            return dbms.between(
+            return self.dbms.between(
                 self.container_name + '.' + self.name, 
                 left_limit.container_name + '.' + left_limit.name if isinstance(left_limit, Column) else left_limit,
                 right_limit.container_name + '.' + right_limit.name if isinstance(right_limit, Column) else right_limit
                 )
 
 
-    def null(self, dbms):
-        return dbms.is_null(self.container_name + '.' + self.name, True)
+    def null(self):
+        return self.dbms.is_null(self.container_name + '.' + self.name, True)
 
-    def not_null(self, dbms):
-        return dbms.is_null(self.container_name + '.' + self.name, False)
+    def not_null(self):
+        return self.dbms.is_null(self.container_name + '.' + self.name, False)
 
-    def in_(self, dbms, query):
-        return dbms.in_(self.container_name + '.' + self.name, query.code(), True)
+    def in_(self, query):
+        return self.dbms.in_(self.container_name + '.' + self.name, query.code(), True)
 
-    def not_in(self, dbms, query):
-        return dbms.in_(self.container_name + '.' + self.name, query.code(), False)
+    def not_in(self, query):
+        return self.dbms.in_(self.container_name + '.' + self.name, query.code(), False)
 
-    def count(self, dbms, distinct):
-        return dbms.count(self.container_name + '.' + self.name, distinct)
+    def count(self, distinct):
+        return self.dbms.count(self.container_name + '.' + self.name, distinct)
 
-    def sum(self, dbms):
-        return dbms.sum(self.container_name + '.' + self.name)
+    def sum(self):
+        return self.dbms.sum(self.container_name + '.' + self.name)
 
-    def max(self, dbms):
-        return dbms.max(self.container_name + '.' + self.name)
+    def max(self):
+        return self.dbms.max(self.container_name + '.' + self.name)
 
-    def min(self, dbms):
-        return dbms.min(self.container_name + '.' + self.name)
+    def min(self):
+        return self.dbms.min(self.container_name + '.' + self.name)
