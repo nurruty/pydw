@@ -1,18 +1,22 @@
 from Table import Table
-from DMS import DMS_TYPE
+from DBMS import DBMS_TYPE
+from Query import Query
 
 class SCDimension1(Table):
 
-  def __init__(self,dms_type,name,columns,key = [],query = [], virtual = False):
-    Table.__init__(self,dms_type,name,columns,key = key, query = query, virtual= virtual)
+    def __init__(self,dms_type,name,columns,key = [],query = [], virtual = False):
+        Table.__init__(self,dms_type,name,columns,key = key, query = query)
 
-  def update_scd1(self,values=[],source = [],source_values = ['*'],join_conditions = []):
-    if len(values) == 0:
-      values = self.columns
+    def update_scd1(self, dbms, source, join_conditions=[]):
+        
+        query = Query(
+                    sources = [source] + [self],
+                    columns = source.columns, 
+                    join_types = ["LEFT JOIN"], 
+                    join_conditions = join_conditions,
+                    where= [dbms.is_null(self.key[0], True)],
+                )
 
-    tables = map(lambda s: s.query if len(s.query) > 0 else s.name, source)
-    temporary = Table.fromQuery(self.dms_type,'', values = source_values, sources = tables + [self.name],
-                join_types = ["LEFT JOIN"], join_conditions = join_conditions,
-                where= ["{0} is null".format(self.key[0])])
-
-    return self.dms.insert(self.name,values,temporary.query)
+       
+        values = [c.name for k, c in self.columns.items()]
+        return self.dbms.insert(self.name, values, query.code(dbms))
