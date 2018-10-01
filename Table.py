@@ -1,6 +1,7 @@
 from SQLServer import SQLServer
 from DBMS import DBMS_TYPE
 from Column import Column
+from copy import deepcopy
 
 def __dbms__(dbms_type):
     if dbms_type == DBMS_TYPE.SQL_SERVER:
@@ -76,6 +77,14 @@ class Table(object):
     
     def delete(self, where=[]):
         return self.dbms.delete(self.name, where=where)
+
+    def get_column_list(self):
+        copy = deepcopy(self.columns)
+        list_ = []
+        for k,c in copy.items():
+            #c.container_name = self.alias
+            list_.append(c)
+        return list_
 
     
 

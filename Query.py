@@ -9,7 +9,9 @@ class Query:
     
     def __init__(self,sources = [] , columns=[], join_types=[], join_conditions=[], where=[], group=[], order=[], order_asc=True, alias=''):
         self.sources = sources #can be tables or other queries
-        self.columns = deepcopy(columns)
+        self.columns = dict()
+        for c in columns:
+            self.columns[c.name] = c
         self.join_types = join_types
         self.join_conditions = join_conditions
         self.where = where
@@ -20,7 +22,16 @@ class Query:
         self.union_queries = []
 
     def add_columns(self, columns):
-        self.columns.append(columns)
+        for c in columns:
+            self.columns[c.name] = c
+
+    def get_column_list(self):
+        copy = deepcopy(self.columns)
+        list_ = []
+        for k,c in copy.items():
+            c.container_name = self.alias
+            list_.append(c)
+        return list_
 
     def add_where_conditions(self, where):
         self.where.append(where)
@@ -43,7 +54,13 @@ class Query:
         self.union_queries.append(query)
     
     def code(self,dbms):
-        column_names = [c.container_name + '.' + c.name + ' ' + c.alias for c in self.columns]
+        column_names = []
+        for k,c in self.columns.items():
+            if c.container_name:
+                column_names.append('.'.join([c.container_name,c.name]) + ' ' + c.alias)
+            else:
+                column_names.append(c.name + ' ' + c.alias)
+                
         if self.sources:
             sources_code = [s.name + ' ' + s.alias if isinstance(s, Table) 
                             else '(' + s.code(dbms) + ') ' + s.alias for s in self.sources]

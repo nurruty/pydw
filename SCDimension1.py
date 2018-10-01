@@ -8,10 +8,11 @@ class SCDimension1(Table):
         Table.__init__(self,dms_type,name,columns,key = key, query = query)
 
     def update_scd1(self, dbms, source, join_conditions=[]):
-        
+
+      
         query = Query(
                     sources = [source] + [self],
-                    columns = source.columns, 
+                    columns = source.get_column_list(), 
                     join_types = ["LEFT JOIN"], 
                     join_conditions = join_conditions,
                     where= [dbms.is_null(self.key[0], True)],
