@@ -97,3 +97,7 @@ class Query:
     def set_columns_container(self, container_name):
         for k,c in self.columns.items():
             c.container_name = container_name
+
+    def update_columns(self, columns, new_columns):
+        for cols in zip(columns,new_columns):
+            self.columns[cols[0].name] = cols[1]

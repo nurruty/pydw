@@ -125,13 +125,13 @@ class SQLServer(DBMS):
     def create_temporary_table(self, table_name, column_names, column_types, column_nullable):
         columns = map(lambda c: "{0} {1} {2}".format(c[0], c[1], "NOT NULL" if not c[2] else "NULL"),
                                 zip(column_names, column_types, column_nullable))
-        statement = "DECLARE @{0} table ({1});".format(table_name, ", ".join(columns))
+        statement = " DECLARE @{0} table ({1});\n".format(table_name, ", ".join(columns))
         return (statement, "@"+table_name)
 
     def declare_variable(self, name, data_type, value=None):
         if value:
-            return "DECLARE {0} {1} = {3};".format(name, data_type, value)
-        return "DECLARE @{0} {1};".format(name, data_type)
+            return " DECLARE {0} {1} = {3};\n".format(name, data_type, value)
+        return " DECLARE @{0} {1};\n".format(name, data_type)
 
     def set_variable(self, name, value):
         return "SET @{0} = {1};".format(name, value) 

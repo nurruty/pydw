@@ -7,6 +7,7 @@ from SCDimension2 import SCDimension2
 from DBMS import DBMS_TYPE
 from SQLServer import SQLServer
 from Column import Column
+from copy import deepcopy
 
 
 dw_con = pymssql.connect(server='rafap62', user='iadev', password='Pdtyynqsn2018_', database='Dimensiones_DW')
@@ -28,6 +29,7 @@ lkp = SCDimension2.from_db(dbms, dw, "Dimensiones_DW", "dbo", "TEST_LKP_FUNCIONA
                            valid_column_name ='REGISTROVALIDO',
                            init_column_name = 'REGISTRO_FECHA_INICIO',
                            end_column_name = 'REGISTRO_FECHA_FIN',
+                           nk_column_names = ['FUNCIONARIO_CEDULA'],
                            alias="lkp")
 
 def test_1_create_dimension():
@@ -35,9 +37,21 @@ def test_1_create_dimension():
 
 def test_2_update_dimension_1():
 
-    lkp.truncate()
+    code = ''
 
+    code += lkp.truncate()
 
+    (aux_code,today_table) = lkp.create_temporal(
+                                table_name = 'hoy',
+                                not_column_names= [
+                                    'FUNCIONARIO_ID'#,
+                                   # lkp.valid_column.name,
+                                   # lkp.init_column.name,
+                                   # lkp.end_column.name
+                                    ]
+                            )
+
+    code += aux_code
 
     query1 = Query(
                 dbms = dbms,
@@ -47,8 +61,7 @@ def test_2_update_dimension_1():
                   usuarios_bolt.columns["UsuarioDocumento"],
                   usuarios_bolt.columns["UsuarioLogin"],
                   lkp_organigrama.columns["ORGANIGRAMA_ID"],
-                  lkp_cargo.columns["CARGO_ID"],
-                  usuarios_bolt.columns["CargoId"]
+                  lkp_cargo.columns["CARGO_ID"]
                 ],
                 join_types=["JOIN","JOIN"],
                 join_conditions=[
@@ -64,14 +77,49 @@ def test_2_update_dimension_1():
                 alias = 'hoy'
             )
 
-    return lkp.update_scd2(
-            source = query1,
-            join_conditions = [["lkp.FUNCIONARIO_NUM = hoy.UsuarioFuncionarioNumero"]],
+    code += today_table.insert(
+        query = query1,
+        columns = [
+            lkp.columns["FUNCIONARIO_NUM"],
+            lkp.columns["FUNCIONARIO_CEDULA"],
+            lkp.columns["FUNCIONARIO_LOGIN"],
+            lkp.columns["ORGANIGRAMA_ID"],
+            lkp.columns["CARGO_ID"]
+        ]
+    )
+
+    query2 = Query(
+        dbms = dbms,
+        sources=[today_table, usuarios_core],
+        columns=[
+            usuarios_bolt.columns["UsuarioLogin"],
+            usuarios_core.columns["GAMUsuarioId"]
+        ],
+        join_types=["JOIN"],
+        join_conditions=[[usuarios_bolt.columns["UsuarioLogin"].equals(usuarios_core.columns["GAMUsuarioLogin"])]],
+        where=[
+            usuarios_bolt.columns["UsuarioLogin"].different("''"),
+            usuarios_core.columns["GAMUsuarioBorrado"].equals(0)]
+    )
+
+    code += today_table.update_from(
+        columns= [today_table.columns["FUNCIONARIO_HASH_CRM"]],
+        source = query2,
+        source_columns = [query2.columns["GAMUsuarioId"]],
+        where = [today_table.columns["FUNCIONARIO_LOGIN"].equals(query2.columns["UsuarioLogin"])]
+
+    )
+
+    code+= lkp.update_scd2(
+            source = today_table,
+            join_key = [today_table.columns["FUNCIONARIO_NUM"]],
             audited_columns = [
                 lkp.columns["CARGO_ID"],
                 lkp.columns["ORGANIGRAMA_ID"]
             ]
         )
+
+    return code
 
 # def test_2_update_dimension_2():
 
