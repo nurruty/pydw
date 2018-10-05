@@ -2,4 +2,4 @@
 /not_used/*
 *.sql
 tests/priv/*
-examples/priv/*
+example.*
