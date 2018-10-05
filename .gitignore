@@ -1,5 +1,5 @@
 *.pyc
 /not_used/*
 *.sql
-test/*.afap.py
-example/*.afap.py
+tests/priv/*
+examples/priv/*
