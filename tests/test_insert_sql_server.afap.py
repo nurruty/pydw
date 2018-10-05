@@ -1,7 +1,6 @@
 import unittest
 import pymssql
-from Sql_server import Sql_server
-from DMS import DMS_TYPE
+from dbms import SQLServer, DbMS_TYPE
 
 dw_con = pymssql.connect(server='rafap62', user='iadev', password='Pdtyynqsn2018_', database='Dimensiones_DW')
 dw = dw_con.cursor()

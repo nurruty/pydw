@@ -1,20 +1,19 @@
 #!/usr/bin/python
 
 import pymssql
-from Table import Table
-from Query import Query
-from SCDimension2 import SCDimension2
-from DBMS import DBMS_TYPE
-from SQLServer import SQLServer
-from Column import Column
+from dwobjects import Table, Query, SCDimension2, Column
+from dbms import DBMS_TYPE, SQLServer
 from copy import deepcopy
+from Etl import Etl
 
 
 dw_con = pymssql.connect(server='rafap62', user='iadev', password='Pdtyynqsn2018_', database='Dimensiones_DW')
+dw_stg = pymssql.connect(server='rafap62', user='iadev', password='Pdtyynqsn2018_', database='Dimensiones_STG')
 dw_ods = pymssql.connect(server='rafap62', user='iadev', password='Pdtyynqsn2018_', database='Dimensiones_ODS')
 
 dw = dw_con.cursor()
 ods = dw_ods.cursor()
+stg = dw_stg.cursor()
 tdms = DBMS_TYPE.SQL_SERVER
 dbms = SQLServer()
 
@@ -43,12 +42,7 @@ def test_2_update_dimension_1():
 
     (aux_code,today_table) = lkp.create_temporal(
                                 table_name = 'hoy',
-                                not_column_names= [
-                                    'FUNCIONARIO_ID'#,
-                                   # lkp.valid_column.name,
-                                   # lkp.init_column.name,
-                                   # lkp.end_column.name
-                                    ]
+                                not_column_names= ['FUNCIONARIO_ID']
                             )
 
     code += aux_code
@@ -68,7 +62,7 @@ def test_2_update_dimension_1():
                     [
                     usuarios_bolt.columns["UsuarioDeptoId"].equals(lkp_organigrama.columns["DEPARTAMENTO_COD"]),
                     usuarios_bolt.columns["UsuarioDivisionId"].equals(lkp_organigrama.columns["DIVISION_COD"]),
-                    usuarios_bolt.columns["UsuarioDivisionId"].equals(lkp_organigrama.columns["SECTOR_COD"])
+                    usuarios_bolt.columns["UsuarioSectorId"].equals(lkp_organigrama.columns["SECTOR_COD"])
                     ],
                     [
                     usuarios_bolt.columns["CargoId"].equals(lkp_cargo.columns["CARGO_COD"])
@@ -88,9 +82,20 @@ def test_2_update_dimension_1():
         ]
     )
 
+
+    code += today_table.update(
+        columns = [
+            lkp.columns["LOCALIDAD_ID"],
+            lkp.columns["DEPARTAMENTO_ID"],
+            lkp.columns["MUTUALISTA_ID"],
+            lkp.columns["CAUSAL_BAJA_ID"],
+        ],
+        data = [str(0), str(0), str(0), str(0),]
+    )
+
     query2 = Query(
         dbms = dbms,
-        sources=[today_table, usuarios_core],
+        sources=[usuarios_bolt, usuarios_core],
         columns=[
             usuarios_bolt.columns["UsuarioLogin"],
             usuarios_core.columns["GAMUsuarioId"]
@@ -102,11 +107,12 @@ def test_2_update_dimension_1():
             usuarios_core.columns["GAMUsuarioBorrado"].equals(0)]
     )
 
-    code += today_table.update_from(
+
+    code += today_table.update_from_query(
         columns= [today_table.columns["FUNCIONARIO_HASH_CRM"]],
         source = query2,
         source_columns = [query2.columns["GAMUsuarioId"]],
-        where = [today_table.columns["FUNCIONARIO_LOGIN"].equals(query2.columns["UsuarioLogin"])]
+        where = [today_table.columns["FUNCIONARIO_LOGIN"].equals(query2.columns["UsuarioLogin"],False)]
 
     )
 
@@ -118,24 +124,27 @@ def test_2_update_dimension_1():
                 lkp.columns["ORGANIGRAMA_ID"]
             ]
         )
+    #print(code)
+    etl = Etl(stg, dbms, 'Dimensiones_STG', 'dbo', 'sp_TEST_LKP_FUNCIONARIO', code = code)
+    text_file = open("Output.sql", "w")
+    text_file.write(etl.create())
+    text_file.close()
 
-    return code
+# # def test_2_update_dimension_2():
 
-# def test_2_update_dimension_2():
+# #   return lkp.update_scd1(
+# #           source = table,
+# #           join_conditions = [["CauBajCod = TEST_ID"]]
+# #         )
 
-#   return lkp.update_scd1(
-#           source = table,
-#           join_conditions = [["CauBajCod = TEST_ID"]]
-#         )
+# # def test2_update_dimension_3():
 
-# def test2_update_dimension_3():
-
-#   temp = Query(dbms=dbms, columns=[Column("1","numeric(1)"),Column("'DESCONOCIDO'","varchar()")])
-#   cond = Query(
-#     dbms=dbms,
-#     sources=[lkp],
-#     columns=[Column(dbms.count("TEST_ID"), "numeric(3)")]
-#   )
+# #   temp = Query(dbms=dbms, columns=[Column("1","numeric(1)"),Column("'DESCONOCIDO'","varchar()")])
+# #   cond = Query(
+# #     dbms=dbms,
+# #     sources=[lkp],
+# #     columns=[Column(dbms.count("TEST_ID"), "numeric(3)")]
+# #   )
 
 #   statements = "IF (" + cond.code()  + ") = 0 BEGIN\n"
 #   statements +=  lkp.insert(
@@ -161,13 +170,13 @@ def test_2_update_dimension_1():
 
 
 
-results.append(test_2_update_dimension_1())
-#results.append(test_2_update_dimension_2())
-#results.append(test2_update_dimension_3())
+# results.append(test_2_update_dimension_1())
+# #results.append(test_2_update_dimension_2())
+# #results.append(test2_update_dimension_3())
 
-for i,result in enumerate(results):
-  print("*************************************************************")
-  print("*************************************************************")
-  print(result)
-  print("*************************************************************")
-  print("*************************************************************")
+# for i,result in enumerate(results):
+#   print("*************************************************************")
+#   print("*************************************************************")
+#   print(result)
+#   print("*************************************************************")
+#   print("*************************************************************")

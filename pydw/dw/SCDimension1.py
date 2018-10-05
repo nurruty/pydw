@@ -1,5 +1,4 @@
 from Dimension import Dimension
-from DBMS import DBMS_TYPE
 from Query import Query
 
 class SCDimension1(Dimension):

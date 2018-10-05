@@ -1,11 +1,6 @@
-from SQLServer import SQLServer
-from DBMS import DBMS_TYPE
 from Column import Column
 from copy import deepcopy
 
-def __dbms__(dbms_type):
-    if dbms_type == DBMS_TYPE.SQL_SERVER:
-        return SQLServer()
 
 class Table(object):
 
@@ -16,7 +11,11 @@ class Table(object):
             c.container_name = name if not alias else alias
             c.dbms = dbms
             self.columns[c.name] = c
-        self.key = key
+        self.key = []
+        for k in key:
+            k.container_name = name if not alias else alias
+            k.dbms = dbms
+            self.key.append(k)
         self.alias = alias
         self.dbms = dbms
 
@@ -46,7 +45,7 @@ class Table(object):
         else:
             columns = table.get_column_list()
         if key_column_names:
-            key = [k for k in table.key if k.name in key_column_names]
+            key = [k for k in table.get_column_list() if k.name in key_column_names]
         else:
             key = table.key
         return cls(dbms, new_name, deepcopy(columns), deepcopy(key), alias)
@@ -83,23 +82,61 @@ class Table(object):
         if not columns:
             columns = self.get_column_list()
         column_names = [c.name for c in columns]
-        return self.dbms.update(self.name, column_names, data, where=where)
+        return self.dbms.update(self.name, values=column_names, data=data, where=where)
 
-    def update_from(self, columns=[], source=None, source_columns=[], where=[]):
+    def update_from_query(self, columns=[], source=None, source_columns=[], where=[]):
         if not columns:
             columns = self.get_column_list()
         column_names = [c.name for c in columns]
 
         if not source_columns:
             source_columns = source.get_column_list()
-        data = [c.get_full_name() for c in source_columns]
 
-        if isinstance(source, Table):
-            source_code = source.name + ' ' + source.alias
-        else:
-            source_code = '(' + source.code() + ') ' + source.alias
+        aux_name = 'Q_' if not source.alias else source.alias
+        aux_source = deepcopy(source)
+        aux_where = []
+
+        data = [aux_name + '.' + c.name + '_' for c in source_columns]
+        for k,c in aux_source.columns.items():
+            c.set_alias(c.name + '_')
+            for w in where:
+                if w.find(c.name) != -1 and w.find(c.container_name) != -1:
+                    w_ = w.replace(c.name, c.name + '_')
+                    w__ = w_.replace(c.container_name, aux_name)
+                    if w__ not in aux_where:
+                        aux_where.append(w__)
+
+
+        source_code = '(' + aux_source.code() + ') ' + aux_name
         return self.dbms.update(table_name=self.name, values=column_names,
-                                data=data, source=source_code, where=where)
+                                data=data, source=source_code, where=aux_where)
+
+    def update_from_table(self, columns, sources, source_columns,
+                          join_types=[], join_conditions=[], where=[]):
+
+        column_names = [c.name for c in columns]
+
+        if len(sources) == 1:
+            source_names = [c.get_full_name() for c in source_columns]
+            source_code = sources[0].name + ' ' + sources[0].alias
+            data = [c.get_full_name() for c in source_columns]
+        # else:
+        #     source_names = [s.name for s in sources]
+        #     source_column_names = [c.get_full_name() + ' ' + c.name + '_'
+        #                 for c in source_columns]
+        #     aux_name = 'Q_'
+        #     aux_sources = deepcopy(sources)
+        #     data = [aux_name + '.' + c.name + '_'
+        #             for c in source_columns]
+        #     for s in aux_sources:
+        #         for k,c in s.columns.items():
+        #             c.set_alias(c.name + '_')
+        #     source_code = ' ( ' + self.dbms.select(source_column_names, source_names,
+        #     join_types, join_conditions) + ' ) ' + aux_name
+
+        return self.dbms.update(table_name=self.name, values=column_names,
+                                    data=data, source=source_code, where=where)
+
 
     def delete(self, where=[]):
         return self.dbms.delete(self.name, where=where)
@@ -120,12 +157,16 @@ class Table(object):
 
     def get_column_nullables(self):
         return [c.is_null for k,c in self.columns.items()]
+    
+    def get_not_nullable_columns(self):
+        return [c for k,c in self.columns.items() if not c.is_null]
 
     def set_columns_container(self, container_name):
         for c in self.columns:
             c.container_name = container_name
 
-    def create_temporal(self, table_name, column_names=[], not_column_names=[]):
+    def create_temporary(self, table_name, column_names=[], not_column_names=[],
+                        key_column_names=[]):
         if not column_names and not not_column_names:
             columns = self.get_column_list()
         elif column_names:
@@ -136,18 +177,20 @@ class Table(object):
         (code, var_name) = self.dbms.create_temporary_table(
             table_name = table_name,
             column_names = [c.name for c in deepcopy(columns)],
-            column_types = [c.data_type for c in deepcopy(columns)],
-            column_nullable = [c.is_null for c in deepcopy(columns)]
+            column_types = [c.data_type for c in deepcopy(columns)]#,
+            #column_nullable = [c.is_null for c in deepcopy(columns)]
         )
 
         if not column_names and not not_column_names:
-            table = Table.from_table(self.dbms, self, var_name, alias=table_name)
+            table = Table.from_table(self.dbms, self, var_name,
+                        key_column_names=key_column_names, alias=table_name)
         elif column_names:
             table = Table.from_table(self.dbms, self, var_name,
-                column_names, alias=table_name)
+                        column_names, key_column_names=key_column_names, alias=table_name)
         else:
             table = Table.from_table(self.dbms, self, var_name,
-                 not_column_names= not_column_names, alias=table_name)
+                        not_column_names= not_column_names,
+                        key_column_names=key_column_names, alias=table_name)
 
         return (code,table)
 
@@ -158,4 +201,12 @@ class Table(object):
     def columns_not_in(self, column_names):
         return [c for k,c in self.columns.items()
                 if c.name not in column_names]
+
+
+    def is_empty(self):
+        code = self.dbms.select(
+            values = self.dbms.count(),
+            sources = [self]
+        )
+        return "IF ( {0} ) = 0".format(code)
 

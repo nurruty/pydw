@@ -1,7 +1,6 @@
 from Dimension import Dimension
 from Column import Column
 from Query import Query
-from DBMS import DBMS_TYPE
 from copy import deepcopy
 
 
@@ -33,7 +32,11 @@ class SCDimension2(Dimension):
         ,dimension.surrogate_key, dimension.natural_key, dimension.alias)
 
 
+    def get_not_nullable_columns(self):
+        return [c for k,c in self.columns.items() 
+                if not c.is_null and c.name != self.surrogate_key.name]
 
+    
 
     def update_scd2(self, source, join_key=[], where=[], audited_columns=[]):
 
@@ -42,13 +45,16 @@ class SCDimension2(Dimension):
 
         columns_aux = self.columns_not_in([self.surrogate_key.name])
         columns_aux_names = [c.name for c in columns_aux]
+        nk_aux_names = [c.name for c in self.natural_key]
 
         if not audited_columns:
             audited_columns = columns_aux
 
-        (statements, new_table) = self.create_temporal('new', columns_aux_names)
+        (statements, new_table) = self.create_temporary('new', 
+                                    columns_aux_names, key_column_names= nk_aux_names)
 
-        (aux_code, changed_table) = self.create_temporal('changed', columns_aux_names)
+        (aux_code, changed_table) = self.create_temporary('changed', 
+                                    columns_aux_names, key_column_names= nk_aux_names)
         statements += aux_code
 
 
@@ -59,7 +65,7 @@ class SCDimension2(Dimension):
         #     aux_alias += 1
 
         #query_colums = [c for c in self.get_column_list() if c.name in source.get_column_names() ]
-        
+
         query = Query(
             dbms = self.dbms,
             sources = [source,self],
@@ -130,8 +136,8 @@ class SCDimension2(Dimension):
         statements += self.update(
             columns = [self.valid_column, self.end_column],
             data = ['0',self.dbms.today()],
-            where = [self.natural_key[0].in_(query),
-                    self.valid_column.equals(1)
+            where = [self.natural_key[0].in_(query,False),
+                     self.valid_column.equals(1,False)
                     ]
         )
 

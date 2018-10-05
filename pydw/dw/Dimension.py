@@ -1,6 +1,10 @@
 from Table import Table
-from DBMS import DBMS_TYPE
+from enum import Enum
 
+class DIMENSION_TYPE(Enum):
+    SCDimension1 = 1
+    SCDimension2 = 2
+    
 class Dimension(Table):
 
     def __init__(self, dbms, name, columns, sk_column, nk_columns=[], alias=''):

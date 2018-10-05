@@ -1,6 +1,3 @@
-
-from DBMS import DBMS_TYPE
-from SQLServer import SQLServer
 from Table import Table
 from copy import deepcopy
 
@@ -68,6 +65,8 @@ class Query:
             sources_code = [s.name + ' ' + s.alias if isinstance(s, Table) 
                             else '(' + s.code() + ') ' + s.alias for s in self.sources]
 
+
+        
         query_code = self.dbms.select(
                         values = column_names,
                         sources = sources_code,
@@ -84,6 +83,36 @@ class Query:
             return self.dbms.union([query_code] + union_code)
         return query_code
 
+
+    def into_table(self, table_name):
+
+        column_names = []
+        sources_code = []
+        for k,c in self.columns.items():
+            if c.container_name:
+                column_names.append('.'.join([c.container_name,c.name]) + ' ' + c.alias)
+            else:
+                column_names.append(c.name + ' ' + c.alias)
+
+        if self.sources:
+            sources_code = [s.name + ' ' + s.alias if isinstance(s, Table)
+                            else '(' + s.code() + ') ' + s.alias for s in self.sources]
+
+        code = self.dbms.select_into(
+                    table_name = table_name,
+                    values = column_names,
+                    sources = sources_code,
+                    join_types = self.join_types,
+                    join_conditions = self.join_conditions,
+                    where = self.where,
+                    group = self.group,
+                    order = self.order,
+                    order_asc = self.dbms.order_asc(self.order_asc)
+                )
+
+        table = Table(self.dbms, table_name, self.get_column_list())
+
+        return (code, table)
 
     def get_column_names(self):
         return [c.name for k,c in self.columns.items()]
