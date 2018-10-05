@@ -1,4 +1,4 @@
-from DBMS import DBMS 
+from pydw.dbms.DBMS import DBMS
 
 class SQLServer(DBMS):
 

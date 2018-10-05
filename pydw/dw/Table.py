@@ -1,4 +1,4 @@
-from Column import Column
+from pydw.dw.Column import Column
 from copy import deepcopy
 
 

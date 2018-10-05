@@ -1,5 +1,5 @@
 
-from dwobjects import Table, Query, SCDimension2
+from pydw.dw import Table, Query, SCDimension2
 
 class Etl:
 

@@ -1,5 +1,5 @@
-from Dimension import Dimension
-from Query import Query
+from pydw.dw.Dimension import Dimension
+from pydw.dw.Query import Query
 
 class SCDimension1(Dimension):
 

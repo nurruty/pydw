@@ -1,4 +1,4 @@
-from Table import Table
+from pydw.dw.Table import Table
 from copy import deepcopy
 
 

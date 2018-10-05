@@ -1,6 +1,6 @@
-from Dimension import Dimension
-from Column import Column
-from Query import Query
+from pydw.dw.Dimension import Dimension
+from pydw.dw.Column import Column
+from pydw.dw.Query import Query
 from copy import deepcopy
 
 

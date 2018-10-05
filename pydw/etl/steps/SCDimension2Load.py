@@ -1,4 +1,4 @@
-from Step import Step
+from pydw.etl.steps.Step import Step
 from pydw.dw import SCDimension2
 
 class SCDimension2Load(Step):

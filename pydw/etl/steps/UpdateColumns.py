@@ -1,4 +1,4 @@
-from Step import Step
+from pydw.etl.steps.Step import Step
 
 class UpdateColumns(Step):
 

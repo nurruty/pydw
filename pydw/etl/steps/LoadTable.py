@@ -1,5 +1,5 @@
-from Step import Step
-from dwobjects import Table
+from pydw.etl.steps.Step import Step
+from pydw.dw import Table
 
 class LoadTable(Step):
 

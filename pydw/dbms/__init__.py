@@ -1,2 +1,2 @@
-from DBMS import DBMS_TYPE
-from SQLServer import SQLServer
+from pydw.dbms.DBMS import DBMS_TYPE
+from pydw.dbms.SQLServer import  SQLServer
