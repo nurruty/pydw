@@ -2,4 +2,4 @@
 /not_used/*
 *.sql
 tests/priv/*
-example.*
+*.priv.py

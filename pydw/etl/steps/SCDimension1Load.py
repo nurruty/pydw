@@ -1,7 +1,7 @@
 from pydw.etl.steps.Step import Step
 from pydw.dw import SCDimension1
 
-class SCD1DimensionsLoad(Step):
+class SCDimension1Load(Step):
 
   def code(self):
       return ''
@@ -21,7 +21,10 @@ class SCD1DimensionsLoad(Step):
         schema_name = self.data['schema']
 
       if self.data.get('dimension_name'):
-        dimension_name = [self.data['dimension_name']]
+        dimension_name = self.data['dimension_name']
+
+      if self.data.get('nk_column_names'):
+        nk_names = self.data['nk_column_names']
 
       dimension = SCDimension1.from_db(
           dbms = self.dbms,
@@ -29,6 +32,7 @@ class SCD1DimensionsLoad(Step):
           database_name = database_name,
           schema_name = schema_name,
           table_name = dimension_name,
+          nk_column_names = nk_names,
           alias = self.name
       )
 

@@ -31,11 +31,6 @@ class SCDimension2(Dimension):
         return cls(dbms, dimension.name, dimension.get_column_list(), valid_column, init_column, end_column
         ,dimension.surrogate_key, dimension.natural_key, dimension.alias)
 
-
-    def get_not_nullable_columns(self):
-        return [c for k,c in self.columns.items() 
-                if not c.is_null and c.name != self.surrogate_key.name]
-
     
 
     def update_scd2(self, source, join_key=[], where=[], audited_columns=[]):

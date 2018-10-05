@@ -13,6 +13,7 @@ class Dimension(Table):
 
         self.surrogate_key = sk_column
         self.natural_key = nk_columns
+        
 
 
     @classmethod
@@ -29,3 +30,8 @@ class Dimension(Table):
         sk = table.key[0]
 
         return cls(dbms, table.name, table.get_column_list(), sk, nk, table.alias)
+
+
+    def get_not_nullable_columns(self):
+        return [c for k,c in self.columns.items() 
+                if not c.is_null and c.name != self.surrogate_key.name]
