@@ -1,1 +1,5 @@
 *.pyc
+/not_used/*
+*.sql
+tests/priv/*
+*.priv.py
