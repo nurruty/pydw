@@ -117,7 +117,6 @@ class Table(object):
         column_names = [c.name for c in columns]
 
         if len(sources) == 1:
-            source_names = [c.get_full_name() for c in source_columns]
             source_code = sources[0].name + ' ' + sources[0].alias
             data = [c.get_full_name() for c in source_columns]
         # else:
@@ -167,6 +166,7 @@ class Table(object):
 
     def create_temporary(self, table_name, column_names=[], not_column_names=[],
                         key_column_names=[]):
+
         if not column_names and not not_column_names:
             columns = self.get_column_list()
         elif column_names:

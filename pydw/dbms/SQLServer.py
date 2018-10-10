@@ -40,7 +40,7 @@ class SQLServer(DBMS):
 
 
     def update(self, table_name, values, data, source='', where=[]):
-        statement = " UPDATE {0} \nSET ".format(table_name)
+        statement = "\n UPDATE {0} \nSET ".format(table_name)
         params = ["{0} = {1}\n".format(d[0],d[1]) for d in zip(values,data)]
         statement += ",".join(params)
         if source:
@@ -201,7 +201,7 @@ class SQLServer(DBMS):
         return " GETDATE()"
 
     def empty_date(self):
-        return '1753-01-01 00:00:00.000'
+        return "'1753-01-01 00:00:00.000'"
 
     def type_number(self, n, r=0):
         return " numeric({0},{1})".format(n,r)

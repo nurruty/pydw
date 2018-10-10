@@ -2,8 +2,9 @@
 class Column:
   
     def __init__(self, name, data_type, is_null=True, is_autonumber=False,
-                 foreign_key_table_name='', foreign_key_column=None, alias=''):
+                 foreign_key_table_name='', foreign_key_column=None, alias='', data=''):
         self.name = name
+        self.data = data if data else name
         self.container_name = ''
         self.alias = alias
         self.data_type = data_type

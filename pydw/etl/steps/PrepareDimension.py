@@ -27,7 +27,7 @@ class PrepareDimension(Step):
 
 
     (code,today_table) = target_table.create_temporary(
-                                table_name = 'hoy',
+                                table_name = 'today',
                                 not_column_names= [surrogate_key.name]
                             )
 

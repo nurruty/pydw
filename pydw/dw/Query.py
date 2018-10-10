@@ -51,22 +51,22 @@ class Query:
 
     def union(self, query):
         self.union_queries.append(query)
-    
+
     def code(self):
         column_names = []
         sources_code = []
         for k,c in self.columns.items():
             if c.container_name:
-                column_names.append('.'.join([c.container_name,c.name]) + ' ' + c.alias)
+                column_names.append('.'.join([c.container_name,c.data]) + ' ' + c.alias)
             else:
-                column_names.append(c.name + ' ' + c.alias)
+                column_names.append(c.data + ' ' + c.alias)
 
         if self.sources:
             sources_code = [s.name + ' ' + s.alias if isinstance(s, Table) 
                             else '(' + s.code() + ') ' + s.alias for s in self.sources]
 
 
-        
+
         query_code = self.dbms.select(
                         values = column_names,
                         sources = sources_code,
@@ -90,9 +90,9 @@ class Query:
         sources_code = []
         for k,c in self.columns.items():
             if c.container_name:
-                column_names.append('.'.join([c.container_name,c.name]) + ' ' + c.alias)
+                column_names.append('.'.join([c.container_name,c.data]) + ' ' + c.alias)
             else:
-                column_names.append(c.name + ' ' + c.alias)
+                column_names.append(c.data + ' ' + c.alias)
 
         if self.sources:
             sources_code = [s.name + ' ' + s.alias if isinstance(s, Table)

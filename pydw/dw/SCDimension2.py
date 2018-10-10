@@ -93,6 +93,10 @@ class SCDimension2(Dimension):
 
 
         audited_column_names = [c.name for c in audited_columns]
+        conditions = [t.different(s) for (t,s) in zip(columns_aux,source.get_column_list())
+                     if t.name in audited_column_names]
+        or_conditions = " OR ".join(conditions)
+
         query = Query(
             dbms = self.dbms,
             sources = [self,source],
@@ -100,8 +104,7 @@ class SCDimension2(Dimension):
                       zip(columns_aux,source.get_column_list()))),
             join_types = ["JOIN"],
             join_conditions= join_conditions,
-            where = [t.different(s) for (t,s) in zip(columns_aux,source.get_column_list())
-                     if t.name in audited_column_names]
+            where = [or_conditions]
         )
 
 

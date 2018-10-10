@@ -18,14 +18,16 @@ class JoinTables(Step):
         table2 = self.input[1]
 
         if self.data.get('columns_table1'):
-                column_names_1 = self.data['columns_table1']
+            column_names_1 = self.data['columns_table1']
+            columns = [table1.columns.get(c) for c in column_names_1]
+        else:
+            columns = table1.get_column_list()
 
         if self.data.get('columns_table2'):
-                column_names_2 = self.data['columns_table2']
-
-
-        columns = [table1.columns.get(c) for c in column_names_1]
-        columns +=  [table2.columns.get(d) for d in column_names_2]
+            column_names_2 = self.data['columns_table2']
+            columns +=  [table2.columns.get(d) for d in column_names_2]
+        else:
+            columns +=  table2.get_column_list()
 
 
         if self.data.get('join'):
@@ -64,4 +66,5 @@ class JoinTables(Step):
             query = query
         )
 
+        print(temp_table.name)
         return(code, temp_table)
