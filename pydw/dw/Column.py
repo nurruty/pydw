@@ -119,12 +119,16 @@ class Column:
     def min(self):
         return self.dbms.min(self.container_name + '.' + self.name)
 
+    def trim(self):
+        if self.dbms.is_char(self.data_type):
+            self.data = self.dbms.trim(self.data)
+
     def set_alias(self, alias):
         self.alias = alias
 
     def empty_value(self):
-        if self.dbms.is_numeric(self.data_type) or self.dbms.is_int(self.data_type):
-            return 0
+        if self.dbms.is_numeric(self.data_type) or self.dbms.is_int(self.data_type) or self.dbms.is_decimal(self.data_type):
+            return str(0)
         elif self.dbms.is_char(self.data_type):
             return "''"
         elif self.dbms.is_date(self.data_type):

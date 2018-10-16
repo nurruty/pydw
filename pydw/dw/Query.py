@@ -56,10 +56,12 @@ class Query:
         column_names = []
         sources_code = []
         for k,c in self.columns.items():
-            if c.container_name:
-                column_names.append('.'.join([c.container_name,c.data]) + ' ' + c.alias)
-            else:
-                column_names.append(c.data + ' ' + c.alias)
+            if c.container_name and c.data.find('.') == -1:
+                c.data = c.container_name + '.' + c.data
+            if self.dbms.is_char(c.data_type):
+                c.trim()
+            column_names.append(c.data + ' ' + c.alias)
+
 
         if self.sources:
             sources_code = [s.name + ' ' + s.alias if isinstance(s, Table) 
@@ -89,10 +91,11 @@ class Query:
         column_names = []
         sources_code = []
         for k,c in self.columns.items():
-            if c.container_name:
-                column_names.append('.'.join([c.container_name,c.data]) + ' ' + c.alias)
-            else:
-                column_names.append(c.data + ' ' + c.alias)
+            if c.container_name and c.data.find('.') == -1:
+                c.data = c.container_name + '.' + c.data
+            if self.dbms.is_char(c.data_type):
+                c.trim()
+            column_names.append(c.data + ' ' + c.alias)
 
         if self.sources:
             sources_code = [s.name + ' ' + s.alias if isinstance(s, Table)

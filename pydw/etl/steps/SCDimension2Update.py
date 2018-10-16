@@ -17,10 +17,11 @@ class SCDimension2Update(Step):
 
 
         if self.data.get('natural_key'):
-            scd_columns = scd_table.get_column_list()
-            natural_key = [c for c in scd_columns if c.name in self.data['natural_key']]
+            #scd_columns = scd_table.get_column_list()
+            table_columns = table.get_column_list()
+            natural_key = [c for c in table_columns if c.name in self.data['natural_key']]
         else:
-            natural_key = scd_table.natural_key
+            natural_key = table_columns.natural_key
 
         if self.data.get('conditions'):
             where = self.data['conditions']

@@ -1,5 +1,6 @@
 from pydw.etl.steps.Step import Step
-from pydw.dw import Query
+from pydw.dw import Query, Table
+from copy import deepcopy
 
 class PrepareDimension(Step):
 
@@ -17,6 +18,7 @@ class PrepareDimension(Step):
     target_table = self.input[1]
 
     surrogate_key = target_table.surrogate_key
+    natural_key_names = [c.name for c in target_table.natural_key]
 
 
     if self.data.get('incoming_columns'):
@@ -25,11 +27,16 @@ class PrepareDimension(Step):
     else:
         incoming_columns = target_table.get_column_list()
 
+    if self.data.get('temporal-table') == True:
+        (code,today_table) = target_table.create_temporary(
+                                    table_name = 'today',
+                                    not_column_names= [surrogate_key.name]
+                                )
+    else:
+        today_table = Table.from_table(self.dbms, target_table, 'today', not_column_names=[surrogate_key.name], key_column_names = natural_key_names)
 
-    (code,today_table) = target_table.create_temporary(
-                                table_name = 'today',
-                                not_column_names= [surrogate_key.name]
-                            )
+        code = today_table.create()
+
 
     query = Query(
         dbms = self.dbms,
@@ -37,21 +44,22 @@ class PrepareDimension(Step):
         sources= [table]
     )
 
+    if len(incoming_columns) < (len(target_table.get_column_list()) - 1):
+        not_nullable_columns = target_table.get_not_nullable_columns()
+        not_nullable_columns = [deepcopy(c) for c in not_nullable_columns
+                                if c.name not in self.data.get('incoming_columns')]
+
+        for c in not_nullable_columns:
+            c.data = c.empty_value()
+            c.container_name = ''
+
+        incoming_columns += not_nullable_columns
+        query.add_columns(not_nullable_columns)
+
     code += today_table.insert(
         query = query,
         columns = incoming_columns
     )
 
-
-    if len(incoming_columns) < (len(target_table.get_column_list()) - 1):
-        not_nullable_columns = target_table.get_not_nullable_columns()
-        not_nullable_columns = [c for c in not_nullable_columns
-                                if c.name not in self.data.get('incoming_columns')]
-        not_nullable_data = [c.empty_value() for c in not_nullable_columns]
-
-        code += today_table.update(
-            columns = not_nullable_columns,
-            data = not_nullable_data
-        )
 
     return (code, today_table)

@@ -1,5 +1,8 @@
 from pydw.dw.Table import Table
+from pydw.dw.Query import Query
+from pydw.dw.Column import Column
 from enum import Enum
+from copy import deepcopy
 
 class DIMENSION_TYPE(Enum):
     SCDimension1 = 1
@@ -35,3 +38,22 @@ class Dimension(Table):
     def get_not_nullable_columns(self):
         return [c for k,c in self.columns.items() 
                 if not c.is_null and c.name != self.surrogate_key.name]
+
+
+    def insert_empty_row(self):
+
+        columns = [c for k,c in self.columns.items() if c.name != self.surrogate_key.name]
+        new_columns = []
+
+        for c in columns:
+            new_col = deepcopy(c)
+            new_col.data = c.empty_value()
+            new_col.container_name = ''
+            new_columns.append(new_col)
+
+        temp = Query(dbms= self.dbms, columns=new_columns)
+
+        return self.insert(
+             query= temp,
+             columns = columns
+            )

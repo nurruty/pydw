@@ -3,3 +3,4 @@
 *.sql
 tests/priv/*
 *.priv.py
+*/Scripts

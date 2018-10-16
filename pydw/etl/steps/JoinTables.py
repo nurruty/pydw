@@ -66,5 +66,4 @@ class JoinTables(Step):
             query = query
         )
 
-        print(temp_table.name)
         return(code, temp_table)

@@ -51,20 +51,24 @@ class Table(object):
         return cls(dbms, new_name, deepcopy(columns), deepcopy(key), alias)
 
 
-    def create(self):
+    def create(self, create_key = False, create_foreign_keys = False):
         column_names = []
         column_types = []
         column_nullable = []
         column_autonumber = []
+        column_key = []
         column_foreign_key = []
-        for c in self.columns:
+        for k,c in self.columns.items():
             column_names.append(c.name)
             column_types.append(c.data_type)
             column_nullable.append(c.is_null)
             column_autonumber.append(c.is_autonumber)
-            column_foreign_key.append(c.foreign_key_table_name, c.foreign_key_column)
+            #column_foreign_key.append(c.foreign_key_table_name, c.foreign_key_column)
+        if create_key:
+            column_key = [ c.name for c in self.key ]
+
         return self.dbms.create_table(self.name,column_names, column_types, 
-                                column_autonumber, self.key, column_foreign_key)
+                                column_nullable, column_key, column_foreign_key)
 
     def drop(self):
         return self.dbms.drop_table(self.name)
@@ -84,7 +88,8 @@ class Table(object):
         column_names = [c.name for c in columns]
         return self.dbms.update(self.name, values=column_names, data=data, where=where)
 
-    def update_from_query(self, columns=[], source=None, source_columns=[], where=[]):
+    def update_from_query(self, columns=[], source=None, source_columns=[],
+                          target_key=[], source_key=[], where=[]):
         if not columns:
             columns = self.get_column_list()
         column_names = [c.name for c in columns]
@@ -94,22 +99,26 @@ class Table(object):
 
         aux_name = 'Q_' if not source.alias else source.alias
         aux_source = deepcopy(source)
-        aux_where = []
 
         data = [aux_name + '.' + c.name + '_' for c in source_columns]
+
         for k,c in aux_source.columns.items():
             c.set_alias(c.name + '_')
-            for w in where:
-                if w.find(c.name) != -1 and w.find(c.container_name) != -1:
-                    w_ = w.replace(c.name, c.name + '_')
-                    w__ = w_.replace(c.container_name, aux_name)
-                    if w__ not in aux_where:
-                        aux_where.append(w__)
 
+
+        join_conditions = []
+        aux_source_key = [deepcopy(c) for c in source_key]
+        for k in zip(target_key, aux_source_key):
+            k[1].name = k[1].name + '_'
+            k[1].container_name = aux_name
+            condition = k[0].equals(k[1], False)
+            join_conditions.append(condition)
+
+        where = join_conditions + where
 
         source_code = '(' + aux_source.code() + ') ' + aux_name
         return self.dbms.update(table_name=self.name, values=column_names,
-                                data=data, source=source_code, where=aux_where)
+                                data=data, source=source_code, where=where)
 
     def update_from_table(self, columns, sources, source_columns,
                           join_types=[], join_conditions=[], where=[]):

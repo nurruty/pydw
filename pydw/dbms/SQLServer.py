@@ -4,7 +4,7 @@ class SQLServer(DBMS):
 
     def create_table(self, table_name, column_names, column_types, column_nullable, key=[], foreign_keys=[]):
         statement = " CREATE TABLE {0} \n(\n".format(table_name)
-        statement += ",".join(map(lambda c: "{0} {1} {2}".format(c[0], c[1], " NOT NULL\n" if not c[2] else " NULL \n"),
+        statement += ",".join(map(lambda c: "{0} {1} {2}".format(c[0], c[1], " NOT NULL\n" if c[2] == 0 else " NULL \n"),
                                 zip(column_names, column_types, column_nullable)))
         if key:
             statement += " CONSTRAINT [PK_{0}] PRIMARY KEY CLUSTERED ( {1} ASC ) \n".format(table_name,",".join(key))
@@ -78,8 +78,9 @@ class SQLServer(DBMS):
 
     def select_into(self, table_name, values=['*'], sources=[], join_types=[]
                     ,join_conditions=[], where=[], group=[], order=[], order_asc='ASC'):
-        values + ' INTO ' + table_name + '\n'
-        return self.select(values, sources, join_types, join_conditions, where, group, order, order_asc )  
+
+        statement = self.select(values, sources, join_types, join_conditions, where, group, order, order_asc )  
+        return statement.replace('FROM', 'INTO ' + table_name +' FROM \n')
 
     def create_procedure(self, database_name, schema_name, name, code, params=[]):
         statement = " USE [{0}]\n".format(database_name)
@@ -192,10 +193,10 @@ class SQLServer(DBMS):
         return " SUM({0})".format(str(element))
 
     def max(self, element):
-        return " MAX({0})".format(str(element))
+        return " MAX({0})".format(element)
 
     def min(self, element):
-        return " MIN({0})".format(str(element))
+        return " MIN({0})".format(element)
 
     def today(self):
         return " GETDATE()"
@@ -215,6 +216,12 @@ class SQLServer(DBMS):
     def is_int(self, data_type):
         return data_type.find('int') != -1
 
+    def type_decimal(self, n, r):
+        return " decimal({0},{1})".format(n,r)
+
+    def is_decimal(self, data_type):
+        return data_type.find('decimal') != -1
+
     def type_varchar(self, l):
         return " varchar({0})".format(l)
 
@@ -229,3 +236,19 @@ class SQLServer(DBMS):
 
     def null_value(self):
         return " NULL"
+
+    def ltrim(self, data):
+        return "ltrim({0})".format(data)
+
+    def rtrim(self, data):
+        return "rtrim({0})".format(data)
+
+    def trim(self, data):
+        return self.ltrim(self.rtrim(data))
+
+
+    def if_begin_end(self, condition, code):
+        statements = "IF (" + condition  + ") = 0 BEGIN\n"
+        statements +=  code
+        statements += "END\n"
+        return statements

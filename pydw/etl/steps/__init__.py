@@ -9,3 +9,4 @@ from pydw.etl.steps.UpdateFromTable import UpdateFromTable
 from pydw.etl.steps.SCDimension2Load import SCDimension2Load
 from pydw.etl.steps.SelectValues import SelectValues 
 from pydw.etl.steps.SCDimension2Update import SCDimension2Update
+from pydw.etl.steps.InitDimension import InitDimension
