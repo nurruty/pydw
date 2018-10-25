@@ -46,6 +46,9 @@ class JoinTables(Step):
             cond = table1.columns[cols[0]].equals(table2.columns[cols[1]])
             join_conditions.append(cond)
 
+        where = []
+        if self.data.get('where'):
+            where = self.data.get('where')
 
         temp_name =  self.name + '_'
 
@@ -58,7 +61,8 @@ class JoinTables(Step):
                     sources= [table1, table2],
                     columns= columns,
                     join_types= join_types,
-                    join_conditions= [join_conditions]
+                    join_conditions= [join_conditions],
+                    where= where
                 )
 
 

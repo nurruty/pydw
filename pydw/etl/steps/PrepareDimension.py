@@ -29,11 +29,11 @@ class PrepareDimension(Step):
 
     if self.data.get('temporal-table') == True:
         (code,today_table) = target_table.create_temporary(
-                                    table_name = 'today',
+                                    table_name = self.name + '_today',
                                     not_column_names= [surrogate_key.name]
                                 )
     else:
-        today_table = Table.from_table(self.dbms, target_table, 'today', not_column_names=[surrogate_key.name], key_column_names = natural_key_names)
+        today_table = Table.from_table(self.dbms, target_table, self.name + '_today', not_column_names=[surrogate_key.name], key_column_names = natural_key_names)
 
         code = today_table.create()
 
