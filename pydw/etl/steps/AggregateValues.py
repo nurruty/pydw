@@ -3,7 +3,7 @@ from pydw.dw import Query, Column, Table
 from copy import deepcopy
 
 
-class SelectValues(Step):
+class AggregateValues(Step):
 # This step spects a table as input, columns as data,
 # and returns the code to create an stagin table, and the
 # resulting Table
@@ -18,10 +18,17 @@ class SelectValues(Step):
 
     def _execute(self):
         table = self.input[0]
+
+        operations = []
+        aggregate_columns = []
         column_data = []
         data_types = dict()
         where = []
 
+        if self.data.get('operations'):
+            operations = self.data['operations']
+        if self.data.get('aggregate_columns'):
+            aggregate_columns = self.data['aggregate_columns']
         if self.data.get('columns'):
             column_data = self.data['columns']
         if self.data.get('metadata'):
@@ -36,6 +43,13 @@ class SelectValues(Step):
             else:
                 col = table.columns[c]
                 columns[c] = deepcopy(col)
+
+        for a in zip(aggregate_columns, operations):
+          op = a[1]
+          c = table.columns[a[0]]
+          coltxt = op + '({0})'.format(c.name)
+          col = Column(name = op + '_' + c.name, data_type = c.data_type, data= coltxt, alias= op + '_' + c.alias)
+          columns[op + '_' + c.alias] = col
 
         column_list = [ c for k,c in columns.items() ]
 
@@ -53,6 +67,7 @@ class SelectValues(Step):
             sources = [table],
             columns= column_list,
             where = where,
+            group= column_data,
             alias = 'temp'
         )
 
@@ -63,6 +78,8 @@ class SelectValues(Step):
 
         for k,c in temp_table.columns.items():
             c.data = c.name
+
+        self.data['where'] = []
 
         return(code, temp_table)
 
